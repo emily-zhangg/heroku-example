@@ -1,5 +1,12 @@
 import express from "express";
 import pg from "pg";
+import aws from "aws-sdk";
+import multerS3 from "multer-s3";
+
+const s3 = new aws.S3({
+  accessKeyId: process.env.ACCESSKEYID,
+  secretAccessKey: process.env.SECRETACCESSKEY,
+});
 const PORT = process.env.PORT || 3004;
 const { Pool } = pg;
 // ...
@@ -59,5 +66,23 @@ app.get("/cats", (request, response) => {
 
   // Query using pg.Pool instead of pg.Client
   pool.query("SELECT * from cats", whenDoneWithQuery);
+});
+
+const multerUpload = multer({
+  storage: multerS3({
+    s3,
+    bucket: "<MY_BUCKET_NAME>",
+    acl: "public-read",
+    metadata: (request, file, callback) => {
+      callback(null, { fieldName: file.fieldname });
+    },
+    key: (request, file, callback) => {
+      callback(null, Date.now().toString());
+    },
+  }),
+});
+app.post("/recipe", multerUpload.single("photo"), (request, response) => {
+  console.log(request.file);
+  response.send(request.file);
 });
 app.listen(PORT);
