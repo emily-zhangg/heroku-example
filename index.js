@@ -1,21 +1,46 @@
-import express from 'express';
+import express from "express";
+import pg from "pg";
+const PORT = process.env.PORT || 3004;
+const { Pool } = pg;
+// ...
 
-const PORT = 3004;
+let pgConnectionConfigs;
+
+// test to see if the env var is set. Then we know we are in Heroku
+if (process.env.DATABASE_URL) {
+  // pg will take in the entire value and use it to connect
+  pgConnectionConfigs = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  };
+} else {
+  // this is the same value as before
+  pgConnectionConfigs = {
+    user: "<MY_UNIX_USERNAME>",
+    host: "localhost",
+    database: "<MY_UNIX_USERNAME>",
+    port: 5432,
+  };
+}
+const pool = new Pool(pgConnectionConfigs);
+
+// ...
 
 // Initialise Express
 const app = express();
 
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 
-app.get('/bananas', (request, response) => {
-
+app.get("/bananas", (request, response) => {
   const responseText = `This is a random number: ${Math.random()}`;
 
-  console.log('request came in', responseText);
+  console.log("request came in", responseText);
 
   const data = { responseText };
 
-  response.render('bananas', data);
+  response.render("bananas", data);
 });
 
 app.listen(PORT);
